@@ -18,7 +18,7 @@ module SageOne
       :raw_response].freeze
 
     DEFAULT_ADAPTER        = Faraday.default_adapter
-    DEFAULT_API_ENDPOINT   = 'https://app.sageone.com/api/v1/'.freeze
+    DEFAULT_API_ENDPOINT   = 'https://app.sageone.com/api/v2/'.freeze
     DEFAULT_USER_AGENT     = "SageOne Ruby Gem #{SageOne::VERSION}".freeze
 
     # Only get the first page when making paginated data requests
