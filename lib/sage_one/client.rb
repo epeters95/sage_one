@@ -4,7 +4,14 @@ require 'sage_one/request'
 require 'sage_one/oauth'
 
 require 'sage_one/client/sales_invoices'
+require 'sage_one/client/purchase_invoices'
 require 'sage_one/client/contacts'
+require 'sage_one/client/contact_types'
+require 'sage_one/client/ledger_accounts'
+require 'sage_one/client/ledger_account_types'
+require 'sage_one/client/incomes'
+require 'sage_one/client/expenses'
+require 'sage_one/client/tax_rates'
 
 module SageOne
   class Client
@@ -28,6 +35,13 @@ module SageOne
     include SageOne::Request
     include SageOne::OAuth
     include SageOne::Client::SalesInvoices
+    include SageOne::Client::PurchaseInvoices
     include SageOne::Client::Contacts
+    include SageOne::Client::ContactTypes
+    include SageOne::Client::LedgerAccounts
+    include SageOne::Client::LedgerAccountTypes
+    include SageOne::Client::Incomes
+    include SageOne::Client::Expenses
+    include SageOne::Client::TaxRates
   end
 end

@@ -24,19 +24,32 @@ module SageOne
 
     private
 
+
     def request(method, path, options)
-      options = format_datelike_objects!(options) unless options.empty?
+
       response = connection.send(method) do |request|
+
+        params_string = get_params_string(options)
         case method
         when :delete, :get
           options.merge!('$startIndex' => options.delete(:start_index)) if options[:start_index]
-          request.url(path, options)
+          request.url(api_endpoint + path, options)
+
         when :post, :put
           request.path = path
-          request.body = MultiJson.dump(options) unless options.empty?
+          request.body = params_string
         end
-        request.headers['Host'] = request_host if request_host
+
+        nonce = CGI.escape(SecureRandom.urlsafe_base64)
+        request.headers['X-Nonce'] = nonce
+        request.headers['Accept'] = "*/*"
+        request.headers["Content-Type"] = "application/x-www-form-urlencoded"
+        
+        request.headers['X-Signature'] = get_sig(get_signing_key, get_base_string(method, path, params_string, nonce))
+        # if X-Signature is not correct, the response will be a 401 Unauthorized error
+
       end
+
 
       if raw_response
         response
@@ -56,6 +69,7 @@ module SageOne
       Hash[ *links.flatten ]
     end
 
+    # not being used currently
     def format_datelike_objects!(options)
       new_opts = {}
       options.map do |k,v|
@@ -66,6 +80,41 @@ module SageOne
         end
       end
       new_opts
+    end
+
+
+    # The following methods are used to create a signature for each request
+
+    def get_params_string(parms)
+      string = Faraday::Utils.build_nested_query(parms)
+      string.gsub!("+", "%20")
+      # Sage requires all +'s to be encoded
+
+      string.gsub!("line_items_attributes%5D%5B%5D", "line_items_attributes%5D%5B0%5D")
+      # replaces ][] with ][0]  (SPECIFICALLY for posting invoices with 1 line item)
+      # for example:
+      # sales_invoice[line_items_attributes][][attr] will always need to be
+      # sales_invoice[line_items_attributes][0][attr]
+
+      string
+    end
+
+    def get_signing_key
+      string = CGI.escape(signing_secret) + '&' + CGI.escape(access_token)
+    end
+
+    def get_base_string(method, endpoint, params_string, nonce)
+      string = method.to_s.upcase + '&'
+      string += CGI.escape(api_endpoint + endpoint) + '&'
+      string += CGI.escape(params_string) + '&'
+      string += nonce
+      string
+    end
+
+    def get_sig(signing_key, base_string)
+      digest = OpenSSL::Digest.new('sha1')
+      hmac = OpenSSL::HMAC.digest(digest, signing_key, base_string)
+      sig = Base64.strict_encode64(hmac)
     end
 
   end

@@ -24,7 +24,7 @@ module SageOne
         redirect_uri:   callback_url,
         response_type: 'code'
       }
-      connection.build_url("/oauth2/auth/", params).to_s
+      connection.build_url("/oauth2/auth", params).to_s
     end
 
     # Returns an access token for future authentication.
